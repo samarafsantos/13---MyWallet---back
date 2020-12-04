@@ -4,7 +4,6 @@ const app = express();
 
 const usersController = require("./controllers/usersController");
 const logController = require("./controllers/logController");
-// const authMiddleware = require("./middlewares/authMiddleware");
 
 app.use(cors());
 app.use(express.json());
@@ -19,8 +18,4 @@ app.get("/api/log", logController.getLog);
 app.post("/api/entry", logController.postEntry);
 app.post("/api/pullout", logController.postPullOut);
 
-const port = 3000;
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+module.exports = app;

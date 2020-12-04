@@ -16,8 +16,7 @@ async function signUp(req, res) {
     const validation = signUpSchema.validate(userInfo);
 
     if(validation.error){
-        console.log(validation.error);
-        res.sendStatus(422);
+        return res.sendStatus(422);
     }
 
     const cryptPass = bcrypt.hashSync(userInfo.password, 10);
@@ -25,8 +24,7 @@ async function signUp(req, res) {
     try{
         await connection.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [userInfo.name, userInfo.email, cryptPass]);
         res.sendStatus(201);
-    }catch(e){
-        console.log(e);
+    }catch{
         res.sendStatus(500);
     }
 }
@@ -36,20 +34,24 @@ async function signIn(req, res) {
     try{
         const user = await connection.query('SELECT * FROM users WHERE email = $1', [userInfo.email]);
         if(!user){
-            res.sendStatus(404);
+            return res.sendStatus(404);
         }
         if(user.rows[0].email === userInfo.email){
             if(!bcrypt.compareSync(userInfo.password, user.rows[0].password)){
-                res.sendStatus(422);
+                return res.sendStatus(422);
             }
             else{
                 const userId = user.rows[0].id;
                 const token = uuidv4();
-                await connection.query('INSERT INTO sessions ("userId", token) VALUES ($1, $2)', [userId, token]);
-                res.status(200).send({id: userId, token, name: user.rows[0].name, email: user.rows[0].email});
+                try{
+                    await connection.query('INSERT INTO sessions ("userId", token) VALUES ($1, $2)', [userId, token]);
+                    res.status(200).send({id: userId, token, name: user.rows[0].name, email: user.rows[0].email});
+                }catch{
+                    res.sendStatus(500);
+                }
             }
         }
-    }catch(e){
+    }catch{
         res.sendStatus(500);
     }
 
@@ -63,25 +65,18 @@ async function signIn(req, res) {
 
 async function logout(req, res) {
     const authHeader = req.header('Authorization');
-    console.log(authHeader);
     const token = authHeader.replace('Bearer ', '');
 
     try{
         await connection.query('DELETE FROM sessions WHERE token = $1',[token]);
         res.sendStatus(200);
     }catch(e){
-        console.log(e);
         res.sendStatus(500);
     }
-}
-
-async function getLog(req, res) {
-    
 }
 
 module.exports = {
     signUp,
     signIn,
-    logout,
-    getLog
+    logout
 };
