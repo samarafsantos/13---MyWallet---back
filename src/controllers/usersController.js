@@ -33,7 +33,6 @@ async function signUp(req, res) {
 
 async function signIn(req, res) {
     const userInfo = req.body;
-
     try{
         const user = await connection.query('SELECT * FROM users WHERE email = $1', [userInfo.email]);
         if(!user){
@@ -44,16 +43,13 @@ async function signIn(req, res) {
                 res.sendStatus(422);
             }
             else{
-                const newSession = {
-                    userId: user.rows[0].id,
-                    token: uuidv4(),
-                };
-                  await connection.query('INSERT INTO sessions ("userId", token) VALUES ($1, $2)', [newSession.userId, newSession.token]);
-                  res.status(200).send(newSession);
+                const userId = user.rows[0].id;
+                const token = uuidv4();
+                await connection.query('INSERT INTO sessions ("userId", token) VALUES ($1, $2)', [userId, token]);
+                res.status(200).send({id: userId, token, name: user.rows[0].name, email: user.rows[0].email});
             }
         }
     }catch(e){
-        console.log(e);
         res.sendStatus(500);
     }
 
@@ -65,12 +61,27 @@ async function signIn(req, res) {
     //SE NÃO, RETORNAR ERRO 422
 }
 
-// async function signOut(req, res) {
+async function logout(req, res) {
+    const authHeader = req.header('Authorization');
+    console.log(authHeader);
+    const token = authHeader.replace('Bearer ', '');
 
-// }
+    try{
+        await connection.query('DELETE FROM sessions WHERE token = $1',[token]);
+        res.sendStatus(200);
+    }catch(e){
+        console.log(e);
+        res.sendStatus(500);
+    }
+}
+
+async function getLog(req, res) {
+    
+}
 
 module.exports = {
     signUp,
     signIn,
-    // signOut
+    logout,
+    getLog
 };
