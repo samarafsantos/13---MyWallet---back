@@ -17,7 +17,7 @@ app.post("/api/logout", usersController.logout);
 // Logs routes
 app.get("/api/log", logController.getLog);
 app.post("/api/entry", logController.postEntry);
-// app.post("/api/pullout", authMiddleware, logController.postPullOut);
+app.post("/api/pullout", logController.postPullOut);
 
 const port = 3000;
 
